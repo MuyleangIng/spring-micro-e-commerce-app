@@ -1,0 +1,175 @@
+version: '3.8'
+
+services:
+  config-server:
+    build:
+      context: services/config-server/
+      dockerfile: Dockerfile
+    ports:
+      - "8888:8888"
+    environment:
+      - SPRING_PROFILES_ACTIVE=native
+    networks:
+      - microservices-net
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8888/actuator/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  discovery-service:
+    build:
+      context: services/discovery/
+      dockerfile: Dockerfile
+    ports:
+      - "8761:8761"
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+    networks:
+      - microservices-net
+    depends_on:
+      config-server:
+        condition: service_healthy
+
+  gateway-service:
+    build:
+      context: services/gateway/
+      dockerfile: Dockerfile
+    ports:
+      - "8222:8222"
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+    networks:
+      - microservices-net
+    depends_on:
+      discovery-service:
+        condition: service_started
+  customer-service:
+    build:
+      context: ./services/customer
+      dockerfile: Dockerfile
+    ports:
+      - "8090:8090"
+    environment:
+      - SPRING_APPLICATION_NAME=customer-service
+      - SPRING_CONFIG_IMPORT=optional:configserver:http://config-server:8888
+      - SPRING_DATA_MONGODB_USERNAME=sen
+      - SPRING_DATA_MONGODB_PASSWORD=sen
+      - SPRING_DATA_MONGODB_HOST=customer-mongodb
+      - SPRING_DATA_MONGODB_PORT=27017
+      - SPRING_DATA_MONGODB_DATABASE=customer
+      - SPRING_DATA_MONGODB_AUTHENTICATION_DATABASE=admin
+    depends_on:
+      - config-server
+    networks:
+      - microservices-net
+
+#networks:
+#  microservices-net:
+#    driver: bridge
+#version: '3.8'
+#
+#services:
+#  config-server:
+#    build:
+#      context: services/config-server/
+#      dockerfile: Dockerfile
+#    ports:
+#      - "8888:8888"
+#    environment:
+#      - SPRING_PROFILES_ACTIVE=native
+#      - SPRING_APPLICATION_NAME=config-server
+#      - SPRING_CLOUD_CONFIG_SERVER_NATIVE_SEARCH_LOCATIONS=classpath:/configurations
+#    networks:
+#      - microservices-net
+#
+#  discovery-service:
+#    build:
+#      context: services/discovery/
+#      dockerfile: Dockerfile
+#    ports:
+#      - "8761:8761"
+#    environment:
+#      - SPRING_PROFILES_ACTIVE=docker
+#    networks:
+#      - microservices-net
+#    depends_on:
+#      config-server:
+#        condition: service_healthy
+#
+#  gateway-service:
+#    build:
+#      context: services/gateway/
+#      dockerfile: Dockerfile
+#    ports:
+#      - "8222:8222"
+#    environment:
+#      - SPRING_APPLICATION_NAME=gateway-service
+#      - SPRING_CONFIG_IMPORT=optional:configserver:http://config-server:8888
+#      - SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER_URI=http://localhost:9098/realms/micro-services
+#    networks:
+#      - microservices-net
+#
+##  customer-service:
+##    build:
+##      context: services/customer/
+##      dockerfile: Dockerfile
+##    ports:
+##      - "8090:8090"
+##    environment:
+##      - SPRING_APPLICATION_NAME=customer-service
+##      - SPRING_CONFIG_IMPORT=optional:configserver:http://config-server:8888
+##    networks:
+##      - microservices-net
+#
+##  notification-service:
+##    build:
+##      context: services/notification/
+##      dockerfile: Dockerfile
+##    ports:
+##      - "8040:8040"
+##    environment:
+##      - SPRING_APPLICATION_NAME=notification-service
+##      - SPRING_CONFIG_IMPORT=optional:configserver:http://config-server:8888
+##    networks:
+##      - microservices-net
+#
+##  order-service:
+##    build:
+##      context: services/order
+##      dockerfile: Dockerfile
+##    ports:
+##      - "8070:8070"
+##    environment:
+##      - SPRING_APPLICATION_NAME=order-service
+##      - SPRING_CONFIG_IMPORT=optional:configserver:http://config-server:8888
+##    networks:
+##      - microservices-net
+#
+##  payment-service:
+##    build:
+##      context: services/payment
+##      dockerfile: Dockerfile
+##    ports:
+##      - "8060:8060"
+##    environment:
+##      - SPRING_APPLICATION_NAME=payment-service
+##      - SPRING_CONFIG_IMPORT=optional:configserver:http://config-server:8888
+##    networks:
+##      - microservices-net
+#
+##  product-service:
+##    build:
+##      context: services/product
+##      dockerfile: Dockerfile
+##    ports:
+##      - "8050:8050"
+##    environment:
+##      - SPRING_APPLICATION_NAME=product-service
+##      - SPRING_CONFIG_IMPORT=optional:configserver:http://config-server:8888
+##    networks:
+##      - microservices-net
+#
+networks:
+  microservices-net:
+    driver: bridge

@@ -1,0 +1,15 @@
+server:
+  port: 8090
+spring:
+  data:
+    mongodb:
+      username: sen
+      password: sen
+      host: 127.0.0.1
+      port: 27017
+      database: customer
+      authentication-database: admin
+management:
+  tracing:
+    sampling:
+      probability: 1.0

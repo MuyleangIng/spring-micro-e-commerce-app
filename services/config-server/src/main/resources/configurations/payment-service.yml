@@ -1,0 +1,30 @@
+server:
+  port: 8060
+spring:
+  datasource:
+    driver-class-name: org.postgresql.Driver
+    url: jdbc:postgresql://127.0.0.1:5432/payment
+    username: sen
+    password: sen
+  jpa:
+    hibernate:
+      ddl-auto: create
+    database: postgresql
+    database-platform: org.hibernate.dialect.PostgreSQLDialect
+
+  kafka:
+    producer:
+      bootstrap-servers: 127.0.0.1:9092
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+      properties:
+        spring.json.type.mapping: paymentConfirmation:com.sen.ecommerce.notification.PaymentNotificationRequest
+application:
+  config:
+    product-url: http://localhost:8222/api/v1/products
+
+
+management:
+  tracing:
+    sampling:
+      probability: 1.0
